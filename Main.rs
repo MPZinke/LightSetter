@@ -11,12 +11,17 @@
 ***********************************************************************************************************************/
 
 
+#![allow(non_snake_case)]
+#![allow(unused_parens)]
+
+
 mod Light;
 
 
 // use http::{request::Builder, request::Request, Response, Result};
 use json;
 use reqwest;
+use serde;
 // use serde::de;
 
 
@@ -28,6 +33,30 @@ static DAY_TIME_VALUE: &str = "\"ct\": 335";  // White
 static NIGHT_TIME_VALUE: &str = "\"xy\": [0.6867,0.3119]";  // Red
 
 
+fn is_on_and_is_reachable(light_json: String) -> bool
+{
+	let mut light = match json::parse(&light_json)
+	{
+		Ok(mut light) => light,
+		Err(_) => return false
+	};
+
+	let is_on: bool = match light.clone().remove("state").remove("on").as_bool().ok_or(false)
+	{
+		Ok(is_on) => is_on,
+		Err(_) => return false
+	};
+
+	let is_reachable: bool = match light.clone().remove("state").remove("reachable").as_bool().ok_or(false)
+	{
+		Ok(is_reachable) => is_reachable,
+		Err(_) => return false
+	};
+
+	return is_on && is_reachable;
+}
+
+
 // SUMMARY: Determines if the light is on to receive a request.
 // DETAILS: Makes a HTTP GET request to get the light's info. Reads the response JSON and determines if the light is on
 //          and reachable.
@@ -36,26 +65,25 @@ fn light_is_on() -> bool
 {
 	let url: String = format!("http://{}/api/{}/lights/{}", HUB_URL, API_KEY, LIGHT_NUMBER);
 
-	match reqwest::get(&url)
+	let mut response = match reqwest::get(&url)
 	{
-		Ok(mut response)
-		=>
-		{
-			if(response.status() != reqwest::StatusCode::Ok)
-			{
-				return false;
-			}
+		Ok(mut response) => response,
+		Err(_) => return false
+	};
 
-			let light_json: Light::Light = match response.json()
-			{
-				Ok(light_json) => light_json,
-				Err(_) => return false
-			};
-			return light_json.state.on && light_json.state.reachable;
-		}
-		Err(_)
-		=> return false;
+	if(response.status() != reqwest::StatusCode::Ok)
+	{
+		return false;
 	}
+
+	let light_json: String = match response.text()
+	{
+		Ok(light_json) => light_json,
+		Err(_) => return false
+	};
+
+	println!("{}", light_json);
+	return is_on_and_is_reachable(light_json);
 }
 
 
@@ -83,7 +111,14 @@ fn main()
 {
 	while(true)
 	{
-
+		if(light_is_on())
+		{
+			println!("True");
+		}
+		else
+		{
+			println!("False");
+		}
 		break;
 	}
 }
