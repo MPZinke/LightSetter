@@ -18,11 +18,8 @@
 mod Light;
 
 
-// use http::{request::Builder, request::Request, Response, Result};
 use json;
 use reqwest;
-use serde;
-// use serde::de;
 
 
 static HUB_URL: &str = env!("HUB_URL");
@@ -41,17 +38,10 @@ fn is_on_and_is_reachable(light_json: String) -> bool
 		Err(_) => return false
 	};
 
-	let is_on: bool = match light.clone().remove("state").remove("on").as_bool().ok_or(false)
-	{
-		Ok(is_on) => is_on,
-		Err(_) => return false
-	};
+	let mut light_state = light.remove("state");
 
-	let is_reachable: bool = match light.clone().remove("state").remove("reachable").as_bool().ok_or(false)
-	{
-		Ok(is_reachable) => is_reachable,
-		Err(_) => return false
-	};
+	let is_on: bool = light_state.remove("on").as_bool().unwrap_or(false);
+	let is_reachable: bool = light_state.remove("reachable").as_bool().unwrap_or(false);
 
 	return is_on && is_reachable;
 }
@@ -82,7 +72,6 @@ fn light_is_on() -> bool
 		Err(_) => return false
 	};
 
-	println!("{}", light_json);
 	return is_on_and_is_reachable(light_json);
 }
 
