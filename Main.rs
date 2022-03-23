@@ -32,18 +32,24 @@ static NIGHT_TIME_VALUE: &str = "\"xy\": [0.6867,0.3119]";  // Red
 
 fn is_on_and_is_reachable(light_json: String) -> bool
 {
-	let mut light = match json::parse(&light_json)
+	match json::parse(&light_json)
 	{
-		Ok(mut light) => light,
-		Err(_) => return false
-	};
+		Ok(mut light)
+		=>
+		{
+			let mut light_state = light.remove("state");
 
-	let mut light_state = light.remove("state");
+			let is_on: bool = light_state.remove("on").as_bool().unwrap_or(false);
+			let is_reachable: bool = light_state.remove("reachable").as_bool().unwrap_or(false);
 
-	let is_on: bool = light_state.remove("on").as_bool().unwrap_or(false);
-	let is_reachable: bool = light_state.remove("reachable").as_bool().unwrap_or(false);
-
-	return is_on && is_reachable;
+			return is_on && is_reachable;
+		}
+		Err(_)
+		=>
+		{
+			return false;
+		}
+	}
 }
 
 
