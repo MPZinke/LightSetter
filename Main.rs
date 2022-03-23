@@ -67,6 +67,7 @@ fn light_is_on() -> bool
 		Err(_) => return false
 	};
 
+	// Check that request was successful
 	if(response.status() != reqwest::StatusCode::Ok)
 	{
 		return false;
@@ -90,8 +91,26 @@ fn set_poweron_color(poweron_color: String) -> bool
 {
 	let url: String = format!("http://{}/api/{}/lights/{}/config", HUB_URL, API_KEY, LIGHT_NUMBER);
 	let body: String = format!("{{\"startup\": {{\"customsettings\": {}}}}}", poweron_color);
-	// let request = Request::put(url).body(body);
-	return false;
+
+	let put_client = reqwest::Client::new();
+	let mut response = match put_client.put(&url).body(body).send()
+	{
+		Ok(mut response) => response,
+		Err(_) => return false
+	};
+
+	// Check that request was successful
+	return response.status() == reqwest::StatusCode::Ok;
+
+	// if(response.status() != reqwest::StatusCode::Ok)
+	// {
+	// 	return false;
+	// }
+
+
+
+
+	// return false;
 }
 
 
