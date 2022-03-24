@@ -18,7 +18,7 @@
 mod Light;
 
 
-use json;
+use json::{JsonValue, parse};
 use reqwest;
 
 
@@ -30,26 +30,34 @@ static DAY_TIME_VALUE: &str = "\"ct\": 335";  // White
 static NIGHT_TIME_VALUE: &str = "\"xy\": [0.6867,0.3119]";  // Red
 
 
-fn is_on_and_is_reachable(light_json: String) -> bool
+fn attribute_is_true(mut json_string: JsonValue, attribute: &str) -> bool
 {
-	match json::parse(&light_json)
+	return json_string.remove(attribute).as_bool().unwrap_or(false);
+}
+
+
+// fn state_is_reachable(light_state_json: String) -> bool
+// {
+// 	match
+// }
+
+
+fn is_reachable(state_json: String) -> bool
+{
+	let mut light_state: JsonValue = match parse(&state_json)
 	{
 		Ok(mut light)
 		=>
 		{
-			let mut light_state = light.remove("state");
-
-			let is_on: bool = light_state.remove("on").as_bool().unwrap_or(false);
-			let is_reachable: bool = light_state.remove("reachable").as_bool().unwrap_or(false);
-
-			return is_on && is_reachable;
+			let light_state = light.remove("state");
+			return attribute_is_true(light_state, "reachable");
 		}
 		Err(_)
 		=>
 		{
 			return false;
 		}
-	}
+	};
 }
 
 
@@ -57,48 +65,48 @@ fn is_on_and_is_reachable(light_json: String) -> bool
 // DETAILS: Makes a HTTP GET request to get the light's info. Reads the response JSON and determines if the light is on
 //          and reachable.
 // RETURNS: Whether the light is on and reachable.
-fn light_is_on(light_id: &str) -> bool
-{
-	let light_json: String = match light_state(light_id)
-	{
-		Ok(light_json) => light_json,
-		Err(_) => return false
-	};
+// fn light_is_reachable(light_id: &str) -> bool
+// {
+// 	let state_json: String = match light_state_json(light_id)
+// 	{
+// 		Ok(state_json) => state_json,
+// 		Err(_) => return false
+// 	};
 
-	println!("{}", light_json); //TESTING
+// 	println!("{}", state_json); //TESTING
 
-	return is_on_and_is_reachable(light_json);
-	return false;
-}
+// 	return is_reachable(state_json);
+// 	// return false;
+// }
 
 
-fn light_state(light_id: &str) -> Result<String, String>
+fn light_info(light_id: &str) -> Result<JsonValue, String>
 {
 	let url: String = format!("http://{}/api/{}/lights/{}", HUB_URL, API_KEY, light_id);
 
-	match reqwest::get(&url)
+	let mut response = match reqwest::get(&url)
 	{
-		Ok(mut response)
-		=>
-		{
-			// Check that request was successful
-			if(response.status() != reqwest::StatusCode::Ok)
-			{
-				return Err(format!("HTTP Status Code {} received", response.status()));
-			}
+		Ok(mut response) => response,
+		Err(err) => return Err(err.to_string())
+	};
 
-			// Set body
-			match response.text()
-			{
-				Ok(light_state_json) => return Ok(light_state_json),
-				Err(err) => return Err(format!("No response body found for get request to {}", response.url()))
-			};
-		}
-		Err(err)
-		=>
-		{
-			return Err(err.to_string());
-		}
+	// Check that request was successful
+	if(response.status() != reqwest::StatusCode::Ok)
+	{
+		return Err(format!("HTTP Status Code {} received", response.status()));
+	}
+
+	// Set body
+	let response_body: String = match response.text()
+	{
+		Ok(response_body) => response_body,
+		Err(err) => return Err(format!("No response body found for get request to {}", response.url()))
+	};
+
+	return match parse(&response_body)
+	{
+		Ok(json_object) => Ok(json_object),
+		Err(err) => Err(err.to_string())
 	};
 }
 
@@ -113,9 +121,9 @@ fn set_poweron_color(light_id: &str, poweron_color: &str) -> bool
 	let body: String = format!("{{\"startup\": {{\"customsettings\": {}}}}}", poweron_color);
 
 	let put_client = reqwest::Client::new();
-	let mut response = match put_client.put(&url).body(body).send()
+	let response = match put_client.put(&url).body(body).send()
 	{
-		Ok(mut response) => response,
+		Ok(response) => response,
 		Err(_) => return false
 	};
 
@@ -135,15 +143,15 @@ fn main()
 {
 	while(true)
 	{
-		if(light_is_on(LIGHT_NUMBER))
-		{
-			set_poweron_color(LIGHT_NUMBER, NIGHT_TIME_VALUE);
-			println!("True");
-		}
-		else
-		{
-			println!("False");
-		}
-		break;
+		// if(light_is_on(LIGHT_NUMBER))
+		// {
+		// 	set_poweron_color(LIGHT_NUMBER, NIGHT_TIME_VALUE);
+		// 	println!("True");
+		// }
+		// else
+		// {
+		// 	println!("False");
+		// }
+		// break;
 	}
 }
