@@ -57,29 +57,48 @@ fn is_on_and_is_reachable(light_json: String) -> bool
 // DETAILS: Makes a HTTP GET request to get the light's info. Reads the response JSON and determines if the light is on
 //          and reachable.
 // RETURNS: Whether the light is on and reachable.
-fn light_is_on() -> bool
+fn light_is_on(light_id: &str) -> bool
 {
-	let url: String = format!("http://{}/api/{}/lights/{}", HUB_URL, API_KEY, LIGHT_NUMBER);
-
-	let mut response = match reqwest::get(&url)
-	{
-		Ok(mut response) => response,
-		Err(_) => return false
-	};
-
-	// Check that request was successful
-	if(response.status() != reqwest::StatusCode::Ok)
-	{
-		return false;
-	}
-
-	let light_json: String = match response.text()
+	let light_json: String = match light_state(light_id)
 	{
 		Ok(light_json) => light_json,
 		Err(_) => return false
 	};
 
+	println!("{}", light_json); //TESTING
+
 	return is_on_and_is_reachable(light_json);
+	return false;
+}
+
+
+fn light_state(light_id: &str) -> Result<String, String>
+{
+	let url: String = format!("http://{}/api/{}/lights/{}", HUB_URL, API_KEY, light_id);
+
+	match reqwest::get(&url)
+	{
+		Ok(mut response)
+		=>
+		{
+			// Check that request was successful
+			if(response.status() != reqwest::StatusCode::Ok)
+			{
+				return Err(format!("HTTP Status Code {} received", response.status()));
+			}
+
+			match response.text()
+			{
+				Ok(light_state_json) => return Ok(light_state_json),
+				Err(err) => return Err(format!("No response body found for get request to {}", response.url()))
+			};
+		}
+		Err(err)
+		=>
+		{
+			return Err(String::from("Connection issue encountered"));
+		}
+	};
 }
 
 
@@ -125,7 +144,7 @@ fn main()
 {
 	while(true)
 	{
-		if(light_is_on())
+		if(light_is_on(LIGHT_NUMBER))
 		{
 			println!("True");
 		}
