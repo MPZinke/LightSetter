@@ -87,6 +87,7 @@ fn light_state(light_id: &str) -> Result<String, String>
 				return Err(format!("HTTP Status Code {} received", response.status()));
 			}
 
+			// Set body
 			match response.text()
 			{
 				Ok(light_state_json) => return Ok(light_state_json),
@@ -96,7 +97,7 @@ fn light_state(light_id: &str) -> Result<String, String>
 		Err(err)
 		=>
 		{
-			return Err(String::from("Connection issue encountered"));
+			return Err(err.to_string());
 		}
 	};
 }
@@ -106,9 +107,9 @@ fn light_state(light_id: &str) -> Result<String, String>
 // PARAMS:  Takes the value to configure the light color to.
 // DETAILS: Makes an HTTP PUT request to the light to set its color.
 // RETURNS: 
-fn set_poweron_color(poweron_color: String) -> bool
+fn set_poweron_color(light_id: &str, poweron_color: &str) -> bool
 {
-	let url: String = format!("http://{}/api/{}/lights/{}/config", HUB_URL, API_KEY, LIGHT_NUMBER);
+	let url: String = format!("http://{}/api/{}/lights/{}/config", HUB_URL, API_KEY, light_id);
 	let body: String = format!("{{\"startup\": {{\"customsettings\": {}}}}}", poweron_color);
 
 	let put_client = reqwest::Client::new();
@@ -120,16 +121,6 @@ fn set_poweron_color(poweron_color: String) -> bool
 
 	// Check that request was successful
 	return response.status() == reqwest::StatusCode::Ok;
-
-	// if(response.status() != reqwest::StatusCode::Ok)
-	// {
-	// 	return false;
-	// }
-
-
-
-
-	// return false;
 }
 
 
@@ -146,6 +137,7 @@ fn main()
 	{
 		if(light_is_on(LIGHT_NUMBER))
 		{
+			set_poweron_color(LIGHT_NUMBER, NIGHT_TIME_VALUE);
 			println!("True");
 		}
 		else
