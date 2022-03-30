@@ -15,28 +15,25 @@
 #![allow(unused_parens)]
 
 
-mod Light;
-
-
+use chrono::{DateTime, Date, Local};
 use json::{JsonValue, parse};
 use reqwest;
+use std::{thread, time};
+
+
+mod Event;
+mod Light;
+use Event::Time;
 
 
 static HUB_URL: &str = env!("HUB_URL");
 static API_KEY: &str = env!("API_KEY");
 
-static LIGHT_NUMBER: &str = "3";
-static DAY_TIME_VALUE: &str = "\"ct\": 335";  // White
-static NIGHT_TIME_VALUE: &str = "\"xy\": [0.6867,0.3119]";  // Red
 
-
-fn attribute_is_true(mut json_string: JsonValue, attribute: &str) -> bool
-{
-	return json_string.remove(attribute).as_bool().unwrap_or(false);
-}
-
+// ———————————————————————————————————————————————————— REQUESTS ———————————————————————————————————————————————————— //
 
 // SUMMARY: Determines if the light is able to receive a request.
+// PARAMS:  Takes the ID of the light to query.
 // DETAILS: Makes a HTTP GET request to get the light's info. Reads the response JSON and determines if the light is on
 //          and reachable.
 // RETURNS: Whether the light is reachable.
@@ -52,8 +49,11 @@ fn light_is_reachable(light_id: &str) -> bool
 }
 
 
-
-
+// SUMMARY: Gets the JSON parsed info for a light.
+// PARAMS:  Takes the ID of the light to query.
+// DETAILS: Makes an HTTP request to the Hub for the light to get the light info. Parses GET request body into a
+//          JsonValue.
+// RETURNS: Ok(A parsed JsonValue of the light info) or Err(String of the error message).
 fn light_info(light_id: &str) -> Result<JsonValue, String>
 {
 	let url: String = format!("http://{}/api/{}/lights/{}", HUB_URL, API_KEY, light_id);
@@ -108,10 +108,53 @@ fn set_poweron_color(light_id: &str, poweron_color: &str) -> bool
 }
 
 
-fn sleep_time() -> u32
+// fn sleep_time() -> u32
+// {
+// 	let now: i64 = Local::now().timestamp();
+// 	let start_of_day: i64 = Local::today().and_hms(0, 0, 0).timestamp();
+// 	let morning: i64 = Local::today().and_hms(DayTime::HOUR, DayTime::MINUTE, 0).timestamp();
+// 	println!("Now: {}", now.to_string());
+// 	println!("Start of Day: {}", start_of_day.to_string());
+// 	return 1 as u32;
+// }
+
+
+// fn current_time_of_day() -> Time
+// {
+// 	let current_time: i64 = Local::now().timestamp();
+// 	let daytime_start: i64 = Local::today().and_hms(DayTime::HOUR, DayTime::MINUTE, 0).timestamp();
+// 	let nighttime_start: i64 = Local::today().and_hms(NightTime::HOUR, NightTime::MINUTE, 0).timestamp();
+
+// 	if(current_time < daytime_start || nighttime_start <= current_time)
+// 	{
+// 		return Time::DAYTIME;
+// 	}
+// 	else
+// 	{
+// 		return Time::NIGHTTIME;
+// 	}
+// }
+
+
+fn sleep_for_5_seconds()
 {
-	return 1 as u32;
+	let five_seconds = time::Duration::from_millis(5000);
+	thread::sleep(five_seconds);
 }
+
+
+// fn poweron_color_for_time_of_day(time_of_day: Time) -> &'static str
+// {
+// 	if(time_of_day as u8 == Time::DAYTIME as u8)
+// 	{
+// 		return DayTime::VALUE;
+// 	}
+// 	else
+// 	{
+// 		return NightTime::VALUE;
+// 	}
+
+// }
 
 
 
@@ -119,22 +162,49 @@ fn main()
 {
 	while(true)
 	{
-		if(light_is_reachable(LIGHT_NUMBER))
+		// while(!light_is_reachable(LIGHT_NUMBER))
+		// {
+		// 	sleep_for_5_seconds();
+		// }
+
+		// let time_of_day: Time = current_time_of_day();
+		// let poweron_color: &str = poweron_color_for_time_of_day(time_of_day);
+
+		if(set_poweron_color("3", ))
 		{
-			println!("Light is reachable");
-			if(set_poweron_color(LIGHT_NUMBER, DAY_TIME_VALUE))
-			{
-				println!("Light value set");
-			}
-			else
-			{
-				println!("Failed to set light value");
-			}
+			println!("Light value set");
 		}
 		else
 		{
-			println!("False");
+			println!("Failed to set light value");
 		}
+		// let poweron_color: &str = if(time_of_day == Time::DAYTIME as u8) {Time::DAYTIME} else {NightTime::VALUE};
+
+		// if(time_of_day() as u8 == Time::DAYTIME as u8)
+		// {
+		// 	println!("DAYTIME");
+		// 	if(set_poweron_color(LIGHT_NUMBER, cE))
+		// 	{
+		// 		light_is_reachable(LIGHT_NUMBER);
+		// 	}
+		// 	else
+		// 	{
+		// 	}
+		// }
+		// else
+		// {
+		// 	println!("NIGHTTIME");
+		// 	if(set_poweron_color(LIGHT_NUMBER, NightTime::VALUE))
+		// 	{
+		// 		println!("Light value set");
+		// 		light_is_reachable(LIGHT_NUMBER);
+		// 	}
+		// 	else
+		// 	{
+		// 		println!("Failed to set light value");
+		// 	}
+		// }
+
 		break;
 	}
 }
