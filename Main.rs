@@ -23,6 +23,7 @@ use std::{thread, time};
 
 mod Event;
 mod Light;
+mod LightEvent;
 use Event::Time;
 
 
@@ -157,10 +158,22 @@ fn sleep_for_5_seconds()
 // }
 
 
+fn upcoming_events() -> Vec<&'static Light::Light>
+{
+	let mut my_test_vector: Vec<&'static Light::Light> = vec![];
+	for x in 0..Light::LIGHTS.len()
+	{
+
+		my_test_vector.push(&Light::LIGHTS[x]);
+	}
+	return my_test_vector;
+}
+
+
 
 fn main()
 {
-	while(true)
+	loop
 	{
 		// while(!light_is_reachable(LIGHT_NUMBER))
 		// {
@@ -170,7 +183,7 @@ fn main()
 		// let time_of_day: Time = current_time_of_day();
 		// let poweron_color: &str = poweron_color_for_time_of_day(time_of_day);
 
-		if(set_poweron_color("3", ))
+		if(set_poweron_color("3", "HELLO"))
 		{
 			println!("Light value set");
 		}
