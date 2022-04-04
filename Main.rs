@@ -23,8 +23,9 @@ use std::{thread, time};
 
 mod Event;
 mod Light;
-mod LightEvent;
-use crate::LightEvent::{EVENTS};
+
+mod Config;
+use crate::Config::{EVENTS};
 
 
 static HUB_URL: &str = env!("HUB_URL");
@@ -108,6 +109,8 @@ fn set_poweron_color(light_id: &str, poweron_color: &str) -> bool
 	return response.status() == reqwest::StatusCode::Ok;
 }
 
+
+// ————————————————————————————————————————————————— EVENT PLANNING ————————————————————————————————————————————————— //
 
 // fn sleep_time() -> u32
 // {
