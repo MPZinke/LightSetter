@@ -14,67 +14,61 @@
 use chrono::{DateTime, Date, Local};
 
 
-pub enum Time
-{
-	DAYTIME,
-	NIGHTTIME
-}
+use crate::Light::{Light, LightID};
 
 
-impl Time
-{
-	pub fn copy(&self) -> Time
-	{
-		return match (self)
-		{
-		Time::DAYTIME => Time::DAYTIME,
-		Time::NIGHTTIME => Time::NIGHTTIME
-		};
-	}
-}
+type Time = i64;
 
 
 pub struct Event
 {
-	pub id: Time,
+	pub light: LightID,
 	pub hour: u32,
 	pub minute: u32,
-	pub poweron: &'static str
+	pub next_activated: i64,
+	pub poweron: &'static str,
 }
 
 
 impl Event
 {
-	// ———————————————————————————————————————————————— CONSTRUCTORS ———————————————————————————————————————————————— //
-
-	pub fn new(id: Time, hour: u32, minute: u32, poweron: &'static str) -> Event
-	{
-		return Event{id: id, hour: hour, minute: minute, poweron: poweron};
-	}
-
-
-	pub fn copy(&self) -> Event
-	{
-		return Event::new(self.id.copy(), self.hour, self.minute, self.poweron);
-	}
-
-
 	// ———————————————————————————————————————————————————— TIME ———————————————————————————————————————————————————— //
 
-	pub fn is_active(&self) -> bool
+	/*
+	SUMMARY: Gets the time until the event for the current day.
+	DETAILS: Determines the current timestamp in seconds and the timestamp of the event.
+	RETURNS: The amount of time for the 
+	*/
+	pub fn time_until_todays_event(&self) -> Time
 	{
-		let current_time: i64 = Local::now().timestamp();
-		let event_time: i64 = Local::today().and_hms(self.hour, self.minute, 0).timestamp();
+		let current_time: Time = Local::now().timestamp();
+		let timestamp: Time = self.timestamp();
 
-		return event_time < current_time;
+		return timestamp - current_time;
 	}
 
 
-	pub fn timestamp(&self) -> i64
+	/*
+	SUMMARY: Gets the timestamp of the event for today.
+	RETURNS: The timestamp of the event for today.
+	*/
+	pub fn timestamp(&self) -> Time
 	{
-		let current_time: i64 = Local::now().timestamp();
-		let event_time: i64 = Local::today().and_hms(self.hour, self.minute, 0).timestamp();
+		return Local::today().and_hms(self.hour, self.minute, 0).timestamp();
+	}
 
-		return event_time + ((event_time < current_time) as i64 * 8640);
+
+	/*
+	SUMMARY: Determines the time in seconds (Unix time) of the next event occurance.
+	DETAILS: Gets the current & event timestamp. Calculates the timestamp of the current day's event & adds a day of
+	         seconds to the timestamp if it is already passed (since the events are daily).
+	RETURNS: The time in seconds (Unix time) of the next event occurance.
+	*/
+	pub fn next(&self) -> Time
+	{
+		let current_time: Time = Local::now().timestamp();
+		let event_time: Time = Local::today().and_hms(self.hour, self.minute, 0).timestamp();
+
+		return event_time + ((event_time < current_time) as Time * 8640);
 	}
 }

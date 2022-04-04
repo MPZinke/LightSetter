@@ -24,23 +24,10 @@ pub enum LightID
 }
 
 
-// impl LightID
-// {
-// 	fn copy(&self) -> LightID
-// 	{
-// 		return match(self)
-// 		{
-
-// 		}
-// 	}
-// }
-
-
 pub struct Light
 {
 	pub id: LightID,
 	pub value: &'static str,
-	pub events: [Event; 2]
 }
 
 
@@ -66,21 +53,3 @@ impl Light
 		return light_events;
 	}
 }
-
-
-pub static LIGHTS: [Light; 1] =
-[
-	Light
-	{
-		id: LightID::SINK,
-		value: "3",
-		events:
-		[
-			Event{id: Time::DAYTIME, hour: 8, minute: 0, poweron: "\"ct\": 335"/* white */},
-			Event{id: Time::NIGHTTIME, hour: 22, minute: 0, poweron: "\"xy\": [0.6867,0.3119]"/* red */}
-		]
-	}
-];
-
-
-

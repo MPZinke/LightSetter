@@ -24,7 +24,7 @@ use std::{thread, time};
 mod Event;
 mod Light;
 mod LightEvent;
-use Event::Time;
+use crate::LightEvent::{EVENTS};
 
 
 static HUB_URL: &str = env!("HUB_URL");
@@ -144,35 +144,19 @@ fn sleep_for_5_seconds()
 }
 
 
-// fn poweron_color_for_time_of_day(time_of_day: Time) -> &'static str
-// {
-// 	if(time_of_day as u8 == Time::DAYTIME as u8)
-// 	{
-// 		return DayTime::VALUE;
-// 	}
-// 	else
-// 	{
-// 		return NightTime::VALUE;
-// 	}
-
-// }
-
-
-fn upcoming_events() -> Vec<&'static Light::Light>
+fn test() -> Vec<&'static Event>
 {
-	let mut my_test_vector: Vec<&'static Light::Light> = vec![];
-	for x in 0..Light::LIGHTS.len()
-	{
+	let asdf: Vec<&'static Event> = vec![];
 
-		my_test_vector.push(&Light::LIGHTS[x]);
-	}
-	return my_test_vector;
+	// for x in 0..
 }
 
 
 
 fn main()
 {
+	let upcoming_events: Vec<&'static Event> = vec![];
+
 	loop
 	{
 		// while(!light_is_reachable(LIGHT_NUMBER))
