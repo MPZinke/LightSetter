@@ -14,6 +14,7 @@
 use chrono::{DateTime, Date, Local};
 
 
+use crate::EventRequest::EventRequest;
 use crate::Light::{Light, LightID};
 
 
@@ -25,13 +26,35 @@ pub struct Event
 	pub light: LightID,
 	pub hour: u32,
 	pub minute: u32,
-	pub next_activated: i64,
 	pub poweron: &'static str,
+}
+
+
+impl PartialEq for Event
+{
+	fn eq(&self, right: &Self) -> bool
+	{
+		return self.light == right.light && self.hour == right.hour && self.minute == right.minute;
+	}
 }
 
 
 impl Event
 {
+	pub fn not_in_requests(&self, event_requests: &Vec<EventRequest>) -> bool
+	{
+		for event_request in event_requests.iter()
+		{
+			if(event_request.event == self)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+
 	// ———————————————————————————————————————————————————— TIME ———————————————————————————————————————————————————— //
 
 	/*

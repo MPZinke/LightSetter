@@ -21,11 +21,15 @@ use reqwest;
 use std::{thread, time};
 
 
+mod Config;
+
 mod Event;
 mod Light;
+mod EventRequest;
 
-mod Config;
+
 use crate::Config::{EVENTS};
+// use crate::EventRequest::EventRequest;
 
 
 static HUB_URL: &str = env!("HUB_URL");
@@ -147,10 +151,37 @@ fn sleep_for_5_seconds()
 }
 
 
-fn test() -> Vec<&'static Event>
+fn event_not_in_requests(event: &'static Event::Event, event_requests: &mut Vec<EventRequest::EventRequest>) -> bool
 {
-	let asdf: Vec<&'static Event> = vec![];
+	for event_request in event_requests.iter()
+	{
+		if(event_request.event == event)
+		{
+			return false;
+		}
+	}
 
+	return true;
+}
+
+
+fn stage_event_requests(event_requests: &mut Vec<EventRequest::EventRequest>) -> ()
+{
+	for event in Config::EVENTS.iter()
+	{
+		if(event.not_in_requests(event_requests))
+		{
+			event_requests.push(EventRequest::EventRequest::new(event));
+		}
+	}
+}
+
+
+fn test() -> Vec<EventRequest::EventRequest>
+{
+	let asdf: Vec<EventRequest::EventRequest> = vec![];
+
+	return asdf;
 	// for x in 0..
 }
 
@@ -158,10 +189,19 @@ fn test() -> Vec<&'static Event>
 
 fn main()
 {
-	let upcoming_events: Vec<&'static Event> = vec![];
+	let mut upcoming_events: Vec<EventRequest::EventRequest> = vec![];
 
 	loop
 	{
+		stage_event_requests(&upcoming_events);
+
+		upcoming_events.retain(
+			|event_request|
+			{
+				return !set_poweron_color(event_request.light.value, event_request.event.poweron);
+			}
+		);
+
 		// while(!light_is_reachable(LIGHT_NUMBER))
 		// {
 		// 	sleep_for_5_seconds();

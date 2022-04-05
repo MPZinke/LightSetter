@@ -14,7 +14,7 @@
 use chrono::{DateTime, Date, Local};
 
 
-use crate::Light::Light;
+use crate::Light::{Light, LightID};
 use crate::Event::Event;
 
 
