@@ -1,0 +1,19 @@
+[package]
+name = "LightSetter"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = "0.4.19"
+reqwest = "0.11.10"
+# FROM: https://serde.rs/derive.html thanks to https://github.com/serde-rs/serde/issues/1586
+serde = {version = "1.0.137", features = ["derive"]}
+serde_json = "1.0.81"
+sqlx = {version = "0.5.13", features = ["runtime-tokio-rustls", "postgres"]}
+tokio = {version = "1.18.2", features = ["full"]}
+
+[[bin]]
+name = "LightSetter"
+path = "Main.rs"
