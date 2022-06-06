@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.19"
+chrono = {version="0.4.19", features=["clock"]}
 reqwest = "0.11.10"
 # FROM: https://serde.rs/derive.html thanks to https://github.com/serde-rs/serde/issues/1586
 serde = {version = "1.0.137", features = ["derive"]}

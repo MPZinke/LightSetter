@@ -15,7 +15,6 @@ use sqlx::{query, PgPool, postgres::PgRow, Row};
 
 
 use crate::LookupError::LookupError;
-use crate::Query::Light::SELECT_Light_by_id;
 use crate::Types::{Event::Event, Light::Light};
 
 

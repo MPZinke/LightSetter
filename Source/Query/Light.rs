@@ -11,7 +11,7 @@
 ***********************************************************************************************************************/
 
 
-use sqlx::{query, PgPool, postgres::PgRow, Row};
+use sqlx::{query, PgPool, postgres::PgRow};
 
 
 use crate::LookupError::{LookupError, NewNotFoundError};

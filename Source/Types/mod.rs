@@ -12,5 +12,5 @@
 
 
 pub mod Event;
-// pub mod EventRequest;
+pub mod EventRequest;
 pub mod Light;

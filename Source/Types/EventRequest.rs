@@ -11,45 +11,47 @@
 ***********************************************************************************************************************/
 
 
-use chrono::{DateTime, Date, Local};
-use json::{JsonValue, parse};
+use chrono::Local;
 use reqwest;
 use std::cmp::Ordering;
 
 
-use crate::Event::Event;
-use crate::Light::Light;
-use crate::Config::{EVENTS, LIGHTS};
+use crate::Types::Event::Event;
 
 
-type Time = i64;
+type Timestamp = i64;
 
 
-static HUB_URL: &str = env!("HUB_URL");
-static API_KEY: &str = env!("API_KEY");
+static API_KEY: &str = env!("LIGHTSETTER_APIKEY");
 
 
+#[derive(Clone)]
 pub struct EventRequest
 {
-	pub event: &'static Event,
-	pub light: &'static Light,
-	pub timestamp: i64,
+	pub event: Event,
+	pub is_activated: bool,  // whether the request has been activated
+	pub timestamp: i64,  // timestamp of this request's activation
 }
 
 
 impl EventRequest
 {
-	pub fn new(event: &'static Event) -> EventRequest
+	pub fn new(event: Event) -> EventRequest
 	{
-		for light in LIGHTS.iter()
+		return EventRequest{timestamp: event.next_timestamp(), is_activated: false, event: event};
+	}
+
+
+	pub fn has_up_to_date_event(&self, events: &Vec<Event>) -> bool
+	{
+		for event in events.iter()
 		{
-			if(light.id == event.light)
+			if(self.event.id == event.id)
 			{
-				return EventRequest{event: event, light: light, timestamp: event.next()};
+				return self.event == (*event);
 			}
 		}
-
-		panic!("Could not find light for ID");
+		return false;  // not found in the events, so remove from event requests
 	}
 
 
@@ -57,8 +59,8 @@ impl EventRequest
 
 	pub fn compare(&self, b: &EventRequest) -> Ordering
 	{
-		let self_time_remaining: Time = self.time_remaining();
-		let b_time_remaining: Time = b.time_remaining();
+		let self_time_remaining: Timestamp = self.time_remaining();
+		let b_time_remaining: Timestamp = b.time_remaining();
 
 		if(self_time_remaining < b_time_remaining)
 		{
@@ -75,44 +77,51 @@ impl EventRequest
 	}
 
 
-	pub fn time_remaining(&self) -> Time
+	/*
+	SUMMARY: Determines the remaining time until the event (or elapsed time if already passed).
+	DETAILS: Subtracts the EventRequest's timestamp from the current timestamp.
+	*/
+	pub fn time_remaining(&self) -> Timestamp
 	{
-		let current_time: Time = Local::now().timestamp();
-		return self.timestamp - current_time;
+		let current_timestamp: Timestamp = Local::now().timestamp();
+		return self.timestamp - current_timestamp;
 	}
 
 
 	// —————————————————————————————————————————————————— REQUESTS —————————————————————————————————————————————————— //
 
-	// SUMMARY: Makes a request to the Hub to configure the light.
-	// PARAMS:  Takes the value to configure the light color to.
-	// DETAILS: Makes an HTTP PUT request to the light to set its color.
-	// RETURNS: Whether the PUT request returns a 200 status
-	pub fn run(&self) -> bool
+	/*
+	SUMMARY: Makes a request to the Hub to configure the light.
+	PARAMS:  Takes the value to configure the light color to.
+	DETAILS: Makes an HTTP PUT request to the light to set its color.
+	RETURNS: Whether the PUT request returns a 200 status
+	*/
+	pub async fn run(&mut self, hub_url: &String) -> ()
 	{
-		let url: String = format!("http://{}/api/{}/lights/{}/config", HUB_URL, API_KEY, self.light.value);
-		let body: String = format!("{{\"startup\": {{\"customsettings\": {{{}}}}}}}", self.event.poweron);
+		let url: String = format!("http://{}/api/{}/lights/{}/config", hub_url, API_KEY, self.event.light.value);
+		let body: String = format!("{{\"startup\": {{\"customsettings\": {{{}}}}}}}", self.event.value);
 
 		let put_client = reqwest::Client::new();
-		let response = match put_client.put(&url).body(body).send()
+		let response = match put_client.put(&url).body(body).send().await
 		{
 			Ok(response) => response,
-			Err(_) => return false
+			Err(_) => return
 		};
 
 		// Check that request was successful
-		return response.status() == reqwest::StatusCode::Ok;
+		(*self).is_activated = response.status() == reqwest::StatusCode::OK;
 	}
 
 
-	pub fn make_request(&self) -> bool
-	{
-		return false;
-	}
+	// pub fn make_request(&self) -> bool
+	// {
+	// 	return false;
+	// }
 
 
-	pub fn should_make_request(&self) -> bool
+	pub fn should_run(&self) -> bool
 	{
-		return false;
+		let current_timestamp: Timestamp = Local::now().timestamp();
+		return self.timestamp <= current_timestamp;
 	}
 }

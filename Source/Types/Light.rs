@@ -11,11 +11,10 @@
 ***********************************************************************************************************************/
 
 
-use chrono::{DateTime, Date, Local};
 use sqlx::{postgres::PgRow, Row};
 
 
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Light
 {
 	pub id: u32,
