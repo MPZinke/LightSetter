@@ -22,7 +22,8 @@ pub async fn get_hue_bridge_IP() -> String
 	headers.insert(AUTHORIZATION, auth_value);
 
 	let client: reqwest::Client = reqwest::Client::builder().default_headers(headers).build().unwrap();
-	let url: String = format!("http://localhost:8081/api/v1.0/network/label/{}/device/label/{}", "Home", "HueBridge");
+	let hub_ip = env!("NETWORKLOOKUP_IP");
+	let url: String = format!("http://{}:8081/api/v1.0/network/label/{}/device/label/{}", hub_ip, "Home", "HueBridge");
 	let body: String = client.get(url).send().await.unwrap().text().await.unwrap();
 
 	let error_message: String = format!("Invalid response received: {}", body);

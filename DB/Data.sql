@@ -15,7 +15,7 @@ INSERT INTO "Light" ("label", "value") VALUES
 ('Sink', '3');
 
 
-INSERT INTO "Event" ("label", "hour", "minute", "value", "Light.id") VALUES
+INSERT INTO "Event" ("label", "hour", "minute", "value", "Light.id")
 SELECT "Temp"."label", "Temp"."hour", "Temp"."minute", "Temp"."value", "Light"."id"
 FROM
 (

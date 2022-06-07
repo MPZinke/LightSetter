@@ -13,7 +13,6 @@
 
 use chrono::Local;
 use reqwest;
-use std::cmp::Ordering;
 
 
 use crate::Types::Event::Event;
@@ -26,6 +25,7 @@ static API_KEY: &str = env!("LIGHTSETTER_APIKEY");
 
 
 #[derive(Clone)]
+// #[derive(Debug, serde::Serialize)]
 pub struct EventRequest
 {
 	pub event: Event,
@@ -55,36 +55,11 @@ impl EventRequest
 	}
 
 
-	// ———————————————————————————————————————————————————— TIME ———————————————————————————————————————————————————— //
+	// ——————————————————————————————————————————————————— OTHER  ——————————————————————————————————————————————————— //
 
-	pub fn compare(&self, b: &EventRequest) -> Ordering
+	pub fn print(&self) -> ()
 	{
-		let self_time_remaining: Timestamp = self.time_remaining();
-		let b_time_remaining: Timestamp = b.time_remaining();
-
-		if(self_time_remaining < b_time_remaining)
-		{
-			return Ordering::Less;
-		}
-		if(self_time_remaining == b_time_remaining)
-		{
-			return Ordering::Equal;
-		}
-		else
-		{
-			return Ordering::Greater;
-		}
-	}
-
-
-	/*
-	SUMMARY: Determines the remaining time until the event (or elapsed time if already passed).
-	DETAILS: Subtracts the EventRequest's timestamp from the current timestamp.
-	*/
-	pub fn time_remaining(&self) -> Timestamp
-	{
-		let current_timestamp: Timestamp = Local::now().timestamp();
-		return self.timestamp - current_timestamp;
+		println!("Setting light {} to {}", self.event.light.label, self.event.value);
 	}
 
 
@@ -96,9 +71,15 @@ impl EventRequest
 	DETAILS: Makes an HTTP PUT request to the light to set its color.
 	RETURNS: Whether the PUT request returns a 200 status
 	*/
-	pub async fn run(&mut self, hub_url: &String) -> ()
+	pub async fn run(&mut self, bridge_ip: &String) -> ()
 	{
-		let url: String = format!("http://{}/api/{}/lights/{}/config", hub_url, API_KEY, self.event.light.value);
+		self.print();  //TESTING
+		if(!self.event.light.is_reachable(bridge_ip).await)
+		{
+			return;
+		}
+
+		let url: String = format!("http://{}/api/{}/lights/{}/config", bridge_ip, API_KEY, self.event.light.value);
 		let body: String = format!("{{\"startup\": {{\"customsettings\": {{{}}}}}}}", self.event.value);
 
 		let put_client = reqwest::Client::new();
@@ -111,12 +92,6 @@ impl EventRequest
 		// Check that request was successful
 		(*self).is_activated = response.status() == reqwest::StatusCode::OK;
 	}
-
-
-	// pub fn make_request(&self) -> bool
-	// {
-	// 	return false;
-	// }
 
 
 	pub fn should_run(&self) -> bool

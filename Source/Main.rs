@@ -26,7 +26,7 @@ mod Query;
 mod Types;
 
 
-use crate::Query::Event::SELECT_Events;
+use crate::Query::{new_connection_pool, Event::SELECT_Events};
 
 
 use crate::Types::EventRequest::EventRequest;
@@ -35,59 +35,28 @@ use crate::Types::Event::Event;
 
 type Seconds = u64;
 type Timestamp = i64;
-// type Time = i64;
 
 
-async fn new_connection_pool() -> PgPool
-{
-	let host: &str = "localhost";
-	// let user: &str = "root";
-	let user: &str = "mpzinke";
-	let DB_name: &str = "LightSetter";
-
-	let connection_str: String = format!("postgres://{}@{}:5432/{}", user, host, DB_name);
-	let connection_pool: PgPool = PgPool::connect(&connection_str).await
-	  .expect("Failed to create Postgres DB connection pool");
-
-	return connection_pool;
-}
-
-
-
-// ———————————————————————————————————————————————————— REQUESTS ———————————————————————————————————————————————————— //
-
-// async fn compile_event_requests(connection_pool: &PgPool) -> Result<Vec<EventRequest>, LookupError::LookupError>
+// fn to_time(timestamp: i64) -> String
 // {
-// 	let events: Vec<Event> = match(SELECT_Events(connection_pool).await)
-// 	{
-// 		Ok(events) => events,
-// 		Err(error) => return Err(error)
-// 	};
-
-// 	let mut event_requests: Vec<EventRequest> = vec![];
-// 	for event in events.iter()
-// 	{
-// 		event_requests.push(EventRequest::new(event.clone()));
-// 	}
-// 	return Ok(event_requests);
+// 	use chrono::{DateTime, NaiveDateTime, Utc};
+// 	let nanoseconds = 230 * 1000000;
+//	let datetime = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(timestamp, nanoseconds), Utc);
+// 	return format!("{}", datetime);
 // }
 
 
-// fn remaining_event_requests(previous_event_requests: Vec<EventRequest>) -> Vec<EventRequest>
+// fn to_hms(delta: Seconds) -> String
 // {
-// 	// Transfer remaining events
-// 	let mut upcoming_event_requests: Vec<EventRequest> = vec![];
-// 	for previous_event_request in previous_event_requests.iter()
-// 	{
-// 		if(previous_event_request.is_activated == false)
-// 		{
-// 			upcoming_event_requests.push((*previous_event_request).clone());
-// 		}
-// 	}
+// 	let hours = delta / 3600;
+// 	let minutes = (delta - (hours * 3600)) / 60;
+// 	let seconds = delta % 60;
 
-// 	return upcoming_event_requests;
+// 	return format!("Hours: {}, Minutes: {}, Seconds: {}", hours, minutes, seconds);
 // }
 
+
+// ———————————————————————————————————————————————— EVENT  COMPILING ———————————————————————————————————————————————— //
 
 fn add_missing_events(event_requests: &mut Vec<EventRequest>, events: &Vec<Event>) -> ()
 {
@@ -110,18 +79,6 @@ fn add_missing_events(event_requests: &mut Vec<EventRequest>, events: &Vec<Event
 }
 
 
-async fn run_event_requests(bridge_ip: &String, event_requests: &mut Vec<EventRequest>) -> ()
-{
-	for x in 0..event_requests.len()
-	{
-		if(event_requests[x].should_run())
-		{
-			event_requests[x].run(bridge_ip).await;
-		}
-	}
-}
-
-
 async fn recompile_event_requests(connection_pool: &PgPool, event_requests: &mut Vec<EventRequest>) -> ()
 {
 	event_requests.retain(|event_request| event_request.is_activated == false);  // Keep non-activated requests
@@ -137,7 +94,19 @@ async fn recompile_event_requests(connection_pool: &PgPool, event_requests: &mut
 }
 
 
-// ————————————————————————————————————————————————— EVENT PLANNING ————————————————————————————————————————————————— //
+async fn run_event_requests(bridge_ip: &String, event_requests: &mut Vec<EventRequest>) -> ()
+{
+	for x in 0..event_requests.len()
+	{
+		if(event_requests[x].should_run())
+		{
+			event_requests[x].run(bridge_ip).await;
+		}
+	}
+}
+
+
+// —————————————————————————————————————————————————————— TIME —————————————————————————————————————————————————————— //
 
 fn calculate_sleep_time(event_requests: &Vec<EventRequest>) -> Seconds
 {
@@ -146,9 +115,16 @@ fn calculate_sleep_time(event_requests: &Vec<EventRequest>) -> Seconds
 		return 30;
 	}
 
-	let current_timestamp: Timestamp = Local::now().timestamp();
-	let soonest_timestamp: Timestamp = event_requests[0].timestamp;
+	let mut soonest_timestamp: Timestamp = event_requests[0].timestamp;
+	for event_request in event_requests.iter()
+	{
+		if(event_request.timestamp < soonest_timestamp)
+		{
+			soonest_timestamp = event_request.timestamp;
+		}
+	}
 
+	let current_timestamp: Timestamp = Local::now().timestamp();
 	// If event has occurred or will occur in the next 5 seconds
 	if(soonest_timestamp < current_timestamp + 5)
 	{
@@ -179,33 +155,10 @@ async fn main()
 	{
 		run_event_requests(&bridge_ip, &mut event_requests).await;
 
-		// add_missing_events(&connection_pool, &mut event_requests).await;
-		// update_changed_events(&mut event_requests);
 		recompile_event_requests(&connection_pool, &mut event_requests).await;
 		
 		// Determine sleeptime & sleep
 		let sleep_time = calculate_sleep_time(&event_requests);
 		sleep_for_(sleep_time);
 	}
-
-	// loop
-	// {
-	// 	// Stage events
-	// 	stage_event_requests(&mut upcoming_events);
-
-	// 	// Determine sleep & sleep until
-
-
-
-	// 	// Call events & retain the ones that are unsuccessfull
-	// 	upcoming_events.retain(
-	// 		|event_request|
-	// 		{
-	// 			!event_request.run()
-	// 		}
-	// 	);
-
-
-	// 	break;
-	// }
 }
