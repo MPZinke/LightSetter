@@ -21,8 +21,7 @@ pub mod Light;
 pub async fn new_connection_pool() -> PgPool
 {
 	let host: &str = "localhost";
-	// let user: &str = "root";
-	let user: &str = "mpzinke";
+	let user: &str = "root";
 	let DB_name: &str = "LightSetter";
 
 	let connection_str: String = format!("postgres://{}@{}:5432/{}", user, host, DB_name);

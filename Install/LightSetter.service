@@ -1,0 +1,11 @@
+[Unit]
+Description=Light setting service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/LightSetter
+User=root
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
