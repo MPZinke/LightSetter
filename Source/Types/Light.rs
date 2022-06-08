@@ -19,7 +19,7 @@ static API_KEY: &str = env!("LIGHTSETTER_APIKEY");
 
 
 #[derive(Clone, PartialEq)]
-// #[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
 pub struct Light
 {
 	pub id: i32,

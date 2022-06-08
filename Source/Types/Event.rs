@@ -22,7 +22,7 @@ type Timestamp = i64;
 
 
 #[derive(Clone, PartialEq)]
-// #[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
 pub struct Event
 {
 	pub id: i32,

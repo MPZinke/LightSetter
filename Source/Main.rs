@@ -62,16 +62,7 @@ fn add_missing_events(event_requests: &mut Vec<EventRequest>, events: &Vec<Event
 {
 	for x in 0..events.len()
 	{
-		let mut event_is_not_event_requests: bool = true;
-		for event_request in event_requests.iter()
-		{
-			if(event_request.event.id == events[x].id)
-			{
-				event_is_not_event_requests = false;
-			}
-		}
-
-		if(event_is_not_event_requests)
+		if(event_requests.iter().all(|request| request.event != events[x]))
 		{
 			event_requests.push(EventRequest::new(events[x].clone()));
 		}
@@ -79,18 +70,31 @@ fn add_missing_events(event_requests: &mut Vec<EventRequest>, events: &Vec<Event
 }
 
 
+/*
+SUMMARY: Edits the event_requests after a change has been made.
+PARAMS:  Takes the connection pool to query the DB from, the event requests vector to edit.
+DETAILS: Gets the Events from the DB. Removes all event requests that no longer have any implication (activated &
+         obsolete). Then removes all event requests that are overridden by more recently fail event requests for a
+         light. These more recently failed event requests for a light will then be retried over and over until success
+         or they are overridden.
+*/
 async fn recompile_event_requests(connection_pool: &PgPool, event_requests: &mut Vec<EventRequest>) -> ()
 {
-	event_requests.retain(|event_request| event_request.is_activated == false);  // Keep non-activated requests
-
-	let updated_events: Vec<Event> = match(SELECT_Events(connection_pool).await)
+	let events: Vec<Event> = match(SELECT_Events(connection_pool).await)
 	{
 		Ok(events) => events,
 		Err(error) => {println!("{}", error); vec![]}
 	};
-	event_requests.retain(|event_request| event_request.has_up_to_date_event(&updated_events));
 
-	add_missing_events(event_requests, &updated_events);
+	// Remove-activated requests
+	event_requests.retain(|event_request| event_request.is_activated == false);
+	// Remove event requests that have obsolete events.
+	event_requests.retain(|event_request| event_request.has_up_to_date_event(&events));
+
+	// Remove all that can be replaced by a more recently attempted event for the light
+	let mut requests_clone: Vec<EventRequest> = event_requests.clone();
+	event_requests.retain(|event_request| event_request.is_not_superseded_by_more_recent_light_event(&requests_clone));
+	add_missing_events(event_requests, &events);  // Add fresh event requests that were removed for being supersceded
 }
 
 
@@ -153,10 +157,12 @@ async fn main()
 
 	loop
 	{
-		run_event_requests(&bridge_ip, &mut event_requests).await;
-
+		// Ensure that everything is accurate after sleep time
 		recompile_event_requests(&connection_pool, &mut event_requests).await;
-		
+		run_event_requests(&bridge_ip, &mut event_requests).await;
+		// Things have changed: recompile for accurate information
+		recompile_event_requests(&connection_pool, &mut event_requests).await;
+
 		// Determine sleeptime & sleep
 		let sleep_time = calculate_sleep_time(&event_requests);
 		sleep_for_(sleep_time);

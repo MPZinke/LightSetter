@@ -24,8 +24,8 @@ type Timestamp = i64;
 static API_KEY: &str = env!("LIGHTSETTER_APIKEY");
 
 
-#[derive(Clone)]
-// #[derive(Debug, serde::Serialize)]
+#[derive(Clone, PartialEq)]
+#[derive(Debug, serde::Serialize)]
 pub struct EventRequest
 {
 	pub event: Event,
@@ -52,6 +52,28 @@ impl EventRequest
 			}
 		}
 		return false;  // not found in the events, so remove from event requests
+	}
+
+
+	pub fn is_not_superseded_by_more_recent_light_event(&self, event_requests: &Vec<EventRequest>) -> bool
+	{
+		let current_timestamp: Timestamp = Local::now().timestamp();
+		if(current_timestamp <= self.timestamp)  // if request has not yet occurred/run
+		{
+			return true;
+		}
+
+		for x in 0..event_requests.len()
+		{
+			// If the request's event's light's id == a different request's event's light's id
+			if(event_requests[x].event.light.id == self.event.light.id && event_requests[x] != *self
+			  && self.timestamp < event_requests[x].timestamp && event_requests[x].timestamp <= current_timestamp)
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 
