@@ -37,25 +37,6 @@ type Seconds = u64;
 type Timestamp = i64;
 
 
-// fn to_time(timestamp: i64) -> String
-// {
-// 	use chrono::{DateTime, NaiveDateTime, Utc};
-// 	let nanoseconds = 230 * 1000000;
-//	let datetime = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(timestamp, nanoseconds), Utc);
-// 	return format!("{}", datetime);
-// }
-
-
-// fn to_hms(delta: Seconds) -> String
-// {
-// 	let hours = delta / 3600;
-// 	let minutes = (delta - (hours * 3600)) / 60;
-// 	let seconds = delta % 60;
-
-// 	return format!("Hours: {}, Minutes: {}, Seconds: {}", hours, minutes, seconds);
-// }
-
-
 // ———————————————————————————————————————————————— EVENT  COMPILING ———————————————————————————————————————————————— //
 
 fn add_missing_events(event_requests: &mut Vec<EventRequest>, events: &Vec<Event>) -> ()
@@ -92,7 +73,7 @@ async fn recompile_event_requests(connection_pool: &PgPool, event_requests: &mut
 	event_requests.retain(|event_request| event_request.has_up_to_date_event(&events));
 
 	// Remove all that can be replaced by a more recently attempted event for the light
-	let mut requests_clone: Vec<EventRequest> = event_requests.clone();
+	let requests_clone: Vec<EventRequest> = event_requests.clone();
 	event_requests.retain(|event_request| event_request.is_not_superseded_by_more_recent_light_event(&requests_clone));
 	add_missing_events(event_requests, &events);  // Add fresh event requests that were removed for being supersceded
 }

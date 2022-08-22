@@ -21,7 +21,7 @@ use crate::Types::Event::Event;
 pub async fn SELECT_Events(pool: &PgPool) -> Result<Vec<Event>, LookupError>
 {
 	let query_str: &str = r#"
-	  SELECT "Event"."id", "Event"."label", "hour", "minute", "Event"."value",
+	  SELECT "Event"."id", "Event"."label", "hour", "minute", path, "Event"."value",
 	  "Light"."id" AS "Light.id", "Light"."label" AS "Light.label", "Light"."value" AS "Light.value"
 	  FROM "Event"
 	  JOIN "Light" ON "Event"."Light.id" = "Light"."id";

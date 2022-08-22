@@ -29,6 +29,7 @@ pub struct Event
 	pub light: Light,
 	pub hour: i32,
 	pub minute: i32,
+	pub path: String,
 	pub value: String
 }
 
@@ -37,8 +38,8 @@ impl Event
 {
 	pub fn new(row: &PgRow) -> Event
 	{
-		return Event{id: row.get("id"), hour: row.get("hour"), minute: row.get("minute"), value: row.get("value"),
-		  light: Light::new(&row)};
+		return Event{id: row.get("id"), hour: row.get("hour"), minute: row.get("minute"), path: row.get("path"),
+		  value: row.get("value"), light: Light::new(&row)};
 	}
 
 

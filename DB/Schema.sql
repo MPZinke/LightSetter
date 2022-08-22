@@ -27,7 +27,6 @@ CREATE TABLE "Event"
 	FOREIGN KEY ("Light.id") REFERENCES "Light"("id"),
 	"hour" INT NOT NULL,
 	"minute" INT NOT NULL,
-	"value" VARCHAR(128) NOT NULL,
-	UNIQUE("label"),
-	UNIQUE("Light.id", "hour", "minute")
+	"path" VARCHAR(256) NOT NULL,
+	"value" TEXT NOT NULL
 );

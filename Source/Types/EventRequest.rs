@@ -30,7 +30,7 @@ pub struct EventRequest
 {
 	pub event: Event,
 	pub is_activated: bool,  // whether the request has been activated
-	pub timestamp: i64,  // timestamp of this request's activation
+	pub timestamp: i64  // timestamp of this request's activation
 }
 
 
@@ -101,11 +101,11 @@ impl EventRequest
 			return;
 		}
 
-		let url: String = format!("http://{}/api/{}/lights/{}/config", bridge_ip, API_KEY, self.event.light.value);
-		let body: String = format!("{{\"startup\": {{\"customsettings\": {{{}}}}}}}", self.event.value);
+		let url: String = format!("http://{}/api/{}/lights/{}/{}", bridge_ip, API_KEY, self.event.light.value,
+		  self.event.path);
 
 		let put_client = reqwest::Client::new();
-		let response = match put_client.put(&url).body(body).send().await
+		let response = match put_client.put(&url).body(self.event.value.clone()).send().await
 		{
 			Ok(response) => response,
 			Err(_) => return
