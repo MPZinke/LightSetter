@@ -22,7 +22,7 @@ pub async fn new_connection_pool() -> PgPool
 {
 	let host: &str = "localhost";
 	let user: &str = "root";
-	let password: &str = env!("LIGHTSETTER_HUE_APIKEY")
+	let password: &str = env!("LIGHTSETTER_HUE_APIKEY");
 	let DB_name: &str = "LightSetter";
 
 	let connection_str: String = format!("postgres://{}:{}@{}:5432/{}", user, password, host, DB_name);
