@@ -21,8 +21,8 @@ pub mod Light;
 pub async fn new_connection_pool() -> PgPool
 {
 	let host: &str = "localhost";
-	let user: &str = "root";
-	let password: &str = env!("LIGHTSETTER_HUE_APIKEY");
+	let user: &str = env!("LIGHTSETTER_DB_USER");
+	let password: &str = env!("LIGHTSETTER_DB_PASSWORD");
 	let DB_name: &str = "LightSetter";
 
 	let connection_str: String = format!("postgres://{}:{}@{}:5432/{}", user, password, host, DB_name);
