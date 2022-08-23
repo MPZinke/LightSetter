@@ -12,6 +12,8 @@
 ########################################################################################################################
 
 
-export LIGHTSETTER_APIKEY=""
-export NETWORKLOOKUP_BEARERTOKEN="Hello"
+export LIGHTSETTER_HUE_APIKEY=""
+export LIGHTSETTER_DB_USER=""
+export LIGHTSETTER_DB_PASSWORD=""
+export NETWORKLOOKUP_BEARERTOKEN=""
 export NETWORKLOOKUP_IP="localhost"

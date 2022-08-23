@@ -15,7 +15,7 @@ use serde_json;
 use sqlx::{postgres::PgRow, Row};
 
 
-static API_KEY: &str = env!("LIGHTSETTER_APIKEY");
+static API_KEY: &str = env!("LIGHTSETTER_HUE_APIKEY");
 
 
 #[derive(Clone, PartialEq)]
